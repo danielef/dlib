@@ -6,6 +6,10 @@ Dlib is a modern C++ toolkit containing machine learning algorithms and tools fo
 
 ## Compiling dlib C++ example programs
 
+```bash
+export CXX=g++-8
+```
+
 Go into the examples folder and type:
 
 ```bash
