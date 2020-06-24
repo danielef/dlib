@@ -257,6 +257,8 @@ add_example(using_custom_kernels_ex)
 add_gui_example(video_tracking_ex)
 add_example(xml_parser_ex)
 
+# danielef
+add_example(dnn_load_weights)
 
 if (DLIB_LINK_WITH_SQLITE3)
    add_example(sqlite_ex)
