@@ -178,6 +178,7 @@ int main(int argc, char** argv) {
     cout << "Error in params" << endl;
     cout << "Usage:" << endl;
     cout << "./dnn_retrain_face_recognition_resnet_model top_level_dir/" << endl;
+    return 1;
   }
 
   auto objs = load_objects_list(argv[1]);
