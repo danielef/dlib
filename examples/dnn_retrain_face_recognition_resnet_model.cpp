@@ -173,11 +173,25 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 // ----------------------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
+
+  if (argc != 2) {
+    cout << "Error in params" << endl;
+    cout << "Usage:" << endl;
+    cout << "./dnn_retrain_face_recognition_resnet_model top_level_dir/"
+  }
+
+  auto objs = load_objects_list(argv[1]);
+
+  cout << "objs.size(): "<< objs.size() << endl;
   
-  net_type network;
-  deserialize("metric_network_renset.dat") >> network;
+  std::vector<matrix<rgb_pixel>> images;
+  std::vector<unsigned long> labels;
+
+  net_type net;
+
+  deserialize("dlib_face_recognition_resnet_model_v1.dat") >> net;
   
-  dnn_trainer<net_type> trainer(network, sgd(0.0001, 0.9));
+  dnn_trainer<net_type> trainer(net, sgd(0.0001, 0.9));
   trainer.set_learning_rate(0.1);
   trainer.be_verbose();
   trainer.set_synchronization_file("face_metric_sync", std::chrono::minutes(5));
@@ -185,4 +199,109 @@ int main(int argc, char** argv) {
   // sooner.  But when you really want to train a good model you should set
   // this to something like 10000 so training doesn't terminate too early.
   trainer.set_iterations_without_progress_threshold(300);
+
+  // If you have a lot of data then it might not be reasonable to load it all
+  // into RAM.  So you will need to be sure you are decompressing your images
+  // and loading them fast enough to keep the GPU occupied.  I like to do this
+  // using the following coding pattern: create a bunch of threads that dump
+  // mini-batches into dlib::pipes.  
+  dlib::pipe<std::vector<matrix<rgb_pixel>>> qimages(4);
+  dlib::pipe<std::vector<unsigned long>> qlabels(4);
+  auto data_loader = [&qimages, &qlabels, &objs](time_t seed)
+  {
+    dlib::rand rnd(time(0)+seed);
+    std::vector<matrix<rgb_pixel>> images;
+    std::vector<unsigned long> labels;
+    while(qimages.is_enabled())
+      {
+        try
+          {
+            load_mini_batch(5, 5, rnd, objs, images, labels);
+            qimages.enqueue(images);
+            qlabels.enqueue(labels);
+          }
+        catch(std::exception& e)
+          {
+            cout << "EXCEPTION IN LOADING DATA" << endl;
+            cout << e.what() << endl;
+          }
+      }
+  };
+
+  // Run the data_loader from 5 threads.  You should set the number of threads
+  // relative to the number of CPU cores you have.
+  std::thread data_loader1([data_loader](){ data_loader(1); });
+  std::thread data_loader2([data_loader](){ data_loader(2); });
+  std::thread data_loader3([data_loader](){ data_loader(3); });
+  std::thread data_loader4([data_loader](){ data_loader(4); });
+  std::thread data_loader5([data_loader](){ data_loader(5); });
+
+  // Here we do the training.  We keep passing mini-batches to the trainer until the
+  // learning rate has dropped low enough.
+  while(trainer.get_learning_rate() >= 1e-4)
+    {
+      qimages.dequeue(images);
+      qlabels.dequeue(labels);
+      trainer.train_one_step(images, labels);
+    }
+
+  // Wait for training threads to stop
+  trainer.get_net();
+  cout << "done training" << endl;
+  
+  // Save the network to disk
+  net.clean();
+  serialize("dlib_face_recognition_resnet_model_rekonos.dat") << net;
+
+  // stop all the data loading threads and wait for them to terminate.
+  qimages.disable();
+  qlabels.disable();
+  data_loader1.join();
+  data_loader2.join();
+  data_loader3.join();
+  data_loader4.join();
+  data_loader5.join();
+
+  // Now, just to show an example of how you would use the network, let's check how well
+  // it performs on the training data.
+  dlib::rand rnd(time(0));
+  load_mini_batch(5, 5, rnd, objs, images, labels);
+
+  // Normally you would use the non-batch-normalized version of the network to do
+  // testing, which is what we do here.
+  anet_type testing_net = net;
+
+  // Run all the images through the network to get their vector embeddings.
+  std::vector<matrix<float,0,1>> embedded = testing_net(images);
+
+  // Now, check if the embedding puts images with the same labels near each other and
+  // images with different labels far apart.
+  int num_right = 0;
+  int num_wrong = 0;
+  for (size_t i = 0; i < embedded.size(); ++i)
+    {
+      for (size_t j = i+1; j < embedded.size(); ++j)
+        {
+          if (labels[i] == labels[j])
+            {
+              // The loss_metric layer will cause images with the same label to be less
+              // than net.loss_details().get_distance_threshold() distance from each
+              // other.  So we can use that distance value as our testing threshold.
+              if (length(embedded[i]-embedded[j]) < testing_net.loss_details().get_distance_threshold())
+                ++num_right;
+              else
+                ++num_wrong;
+            }
+          else
+            {
+              if (length(embedded[i]-embedded[j]) >= testing_net.loss_details().get_distance_threshold())
+                ++num_right;
+              else
+                ++num_wrong;
+            }
+        }
+    }
+  
+  cout << "num_right: "<< num_right << endl;
+  cout << "num_wrong: "<< num_wrong << endl;
 }
