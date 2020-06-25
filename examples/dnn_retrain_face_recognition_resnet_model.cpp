@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
   std::vector<matrix<rgb_pixel>> images;
   std::vector<unsigned long> labels;
 
-  net_type net;
+  anet_type net;
 
   deserialize("dlib_face_recognition_resnet_model_v1.dat") >> net;
   
