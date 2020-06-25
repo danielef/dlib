@@ -156,7 +156,7 @@ using net_type = loss_metric<fc_no_bias<128,avg_pool_everything<
                             level3<
                             level4<
                             max_pool<3,3,2,2,relu<bn_con<con<32,7,7,2,2,
-                            input_rgb_image_sized<150>
+                            input_rgb_image
                             >>>>>>>>>>>>;
 
 // testing network type (replaced batch normalization with fixed affine transforms)
@@ -167,7 +167,7 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
                             alevel3<
                             alevel4<
                             max_pool<3,3,2,2,relu<affine<con<32,7,7,2,2,
-                            input_rgb_image_sized<150>
+                            input_rgb_image
                             >>>>>>>>>>>>;
 
 // ----------------------------------------------------------------------------------------
