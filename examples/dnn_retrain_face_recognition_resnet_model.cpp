@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
 
   deserialize("dlib_face_recognition_resnet_model_v1.dat") >> net;
   
-  dnn_trainer<net_type> trainer(net, sgd(0.0001, 0.9));
+  dnn_trainer<anet_type> trainer(net, sgd(0.0001, 0.9));
   trainer.set_learning_rate(0.1);
   trainer.be_verbose();
   trainer.set_synchronization_file("face_metric_sync", std::chrono::minutes(5));
