@@ -1,6 +1,6 @@
 #include <dlib/dnn.h>
 #include <dlib/image_io.h>
-#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/misc_api.h>
 
 using namespace dlib;
 using namespace std;
