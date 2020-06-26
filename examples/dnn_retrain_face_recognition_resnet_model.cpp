@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
   // I've set this to something really small to make the example terminate
   // sooner.  But when you really want to train a good model you should set
   // this to something like 10000 so training doesn't terminate too early.
-  trainer.set_iterations_without_progress_threshold(300);
+  trainer.set_iterations_without_progress_threshold(10000);
 
   // If you have a lot of data then it might not be reasonable to load it all
   // into RAM.  So you will need to be sure you are decompressing your images
@@ -239,7 +239,7 @@ int main(int argc, char** argv) {
 
   // Here we do the training.  We keep passing mini-batches to the trainer until the
   // learning rate has dropped low enough.
-  while(trainer.get_learning_rate() >= 1e-4)
+  while(trainer.get_learning_rate() >= 1e-5)
     {
       qimages.dequeue(images);
       qlabels.dequeue(labels);
