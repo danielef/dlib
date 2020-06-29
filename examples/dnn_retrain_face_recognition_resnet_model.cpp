@@ -1,3 +1,4 @@
+#include <fstream>
 #include <dlib/dnn.h>
 #include <dlib/image_io.h>
 #include <dlib/misc_api.h>
@@ -107,6 +108,11 @@ void load_mini_batch (
     }
 }
 
+inline bool file_exists(const std::string& name) {
+    ifstream f(name.c_str());
+    return f.good();
+}
+
 // ----------------------------------------------------------------------------------------
 
 // The next bit of code defines a ResNet network.  It's basically copied
@@ -174,14 +180,20 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 
 int main(int argc, char** argv) {
 
-  if (argc != 2) {
+  if (argc != 4) {
     cout << "Error in params" << endl;
     cout << "Usage:" << endl;
-    cout << "./dnn_retrain_face_recognition_resnet_model top_level_dir/" << endl;
+    cout << "./dnn_retrain_face_recognition_resnet_model <from-dat> <to-dat> <dataset-root>" << endl;
     return 1;
   }
+  
+  if (file_exists(argv[1])) {
+    cout << argv[1] << " exists" << endl;
+  }
 
-  auto objs = load_objects_list(argv[1]);
+  file_exists(argv[2])
+
+  auto objs = load_objects_list(argv[3]);
 
   cout << "objs.size(): "<< objs.size() << endl;
   
@@ -189,7 +201,6 @@ int main(int argc, char** argv) {
   std::vector<unsigned long> labels;
 
   anet_type net;
-
   deserialize("dlib_face_recognition_resnet_model_v1.dat") >> net;
   
   dnn_trainer<anet_type> trainer(net, sgd(0.0001, 0.9));
