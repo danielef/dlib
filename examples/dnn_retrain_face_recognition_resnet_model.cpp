@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
   std::vector<unsigned long> labels;
 
   anet_type net;
-  deserialize("dlib_face_recognition_resnet_model_v1.dat") >> net;
+  deserialize(argv[1]) >> net;
   
   dnn_trainer<anet_type> trainer(net, sgd(0.0001, 0.9));
   trainer.set_learning_rate(0.001);
@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
   
   // Save the network to disk
   net.clean();
-  serialize("dlib_face_recognition_resnet_model_rekonos.dat") << net;
+  serialize(argv[2]) << net;
 
   // stop all the data loading threads and wait for them to terminate.
   qimages.disable();
