@@ -188,10 +188,18 @@ int main(int argc, char** argv) {
   }
   
   if (exists(argv[1])) {
-    cout << argv[1] << " exists" << endl;
+    cout << argv[1] << " file exists" << endl;
+  } else {
+    cout << "Error:" << endl;
+    cout << argv[1] << " not found" << endl;
+    return 1;
   }
 
-  exists(argv[2]);
+  if (exists(argv[2])) {
+    cout << "Error:" << endl;
+    cout << argv[2] << " already exists" << endl;
+    return 1;
+  }
 
   auto objs = load_objects_list(argv[3]);
 
