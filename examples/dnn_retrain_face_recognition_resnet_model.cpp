@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
     cout << argv[1] << " exists" << endl;
   }
 
-  exists(argv[2])
+  exists(argv[2]);
 
   auto objs = load_objects_list(argv[3]);
 
