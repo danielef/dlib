@@ -108,7 +108,7 @@ void load_mini_batch (
     }
 }
 
-inline bool file_exists(const std::string& name) {
+inline bool exists(const std::string& name) {
     ifstream f(name.c_str());
     return f.good();
 }
@@ -187,11 +187,11 @@ int main(int argc, char** argv) {
     return 1;
   }
   
-  if (file_exists(argv[1])) {
+  if (exists(argv[1])) {
     cout << argv[1] << " exists" << endl;
   }
 
-  file_exists(argv[2])
+  exists(argv[2])
 
   auto objs = load_objects_list(argv[3]);
 
