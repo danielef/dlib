@@ -180,28 +180,30 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 
 int main(int argc, char** argv) {
 
-  if (argc != 4) {
+  if (argc != 5) {
     cout << "Error in params" << endl;
     cout << "Usage:" << endl;
-    cout << "./dnn_retrain_face_recognition_resnet_model <from-dat> <to-dat> <dataset-root>" << endl;
+    cout << "./dnn_retrain_face_recognition_resnet_model <learning-rate> <from-dat> <to-dat> <dataset-root>" << endl;
     return 1;
   }
-  
-  if (exists(argv[1])) {
-    cout << argv[1] << " file exists" << endl;
-  } else {
-    cout << "Error:" << endl;
-    cout << argv[1] << " not found" << endl;
-    return 1;
-  }
+ 
+  float learning_rate_input = std::stof(argv[1]); 
 
   if (exists(argv[2])) {
+    cout << argv[2] << " file exists" << endl;
+  } else {
     cout << "Error:" << endl;
-    cout << argv[2] << " already exists" << endl;
+    cout << argv[2] << " not found" << endl;
     return 1;
   }
 
-  auto objs = load_objects_list(argv[3]);
+  if (exists(argv[3])) {
+    cout << "Error:" << endl;
+    cout << argv[3] << " already exists" << endl;
+    return 1;
+  }
+
+  auto objs = load_objects_list(argv[4]);
 
   cout << "objs.size(): "<< objs.size() << endl;
   
@@ -209,10 +211,10 @@ int main(int argc, char** argv) {
   std::vector<unsigned long> labels;
 
   anet_type net;
-  deserialize(argv[1]) >> net;
+  deserialize(argv[2]) >> net;
   
   dnn_trainer<anet_type> trainer(net, sgd(0.0001, 0.9));
-  trainer.set_learning_rate(0.001);
+  trainer.set_learning_rate(learning_rate_input);
   trainer.be_verbose();
   trainer.set_synchronization_file("face_metric_sync", std::chrono::minutes(5));
   // I've set this to something really small to make the example terminate
@@ -271,7 +273,7 @@ int main(int argc, char** argv) {
   
   // Save the network to disk
   net.clean();
-  serialize(argv[2]) << net;
+  serialize(argv[3]) << net;
 
   // stop all the data loading threads and wait for them to terminate.
   qimages.disable();
